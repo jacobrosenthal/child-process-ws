@@ -1,0 +1,21 @@
+{
+  "name": "child-process-ws",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jacobrosenthal/child-process-ws.git"
+  },
+  "version": "0.0.0",
+  "description": "",
+  "main": "ChildProcess.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "ws": "^0.8.0"
+  },
+  "author": {
+    "name": "Jacob Rosenthal",
+    "email": "jakerosenthal@gmail.com"
+  },
+  "license": "MIT"
+}
