@@ -9,6 +9,7 @@ function Bridge () {
 
   this.open = false;
   this.command = null;
+  this.callback = null;
   this._ws = new WebSocket('ws://' + ip + ':' + port);
 
   this.on('message', this._onMessage.bind(this));
@@ -46,22 +47,33 @@ Bridge.prototype._onError = function (error) {
 
 Bridge.prototype._onMessage = function (event) {
   var type = event.type;
-  var data = event.data ? new Buffer(event.data, 'hex') : null;
+  var data = event.data;
   var code = event.code;
   var signal = event.signal;
+  var typeOf = event.typeOf;
+
+  var error = event.error ? new Error(event.error) : null;
+  var stdout = event.stdout;
+  var stderr = event.stderr;
 
   // console.log('on -> message: ' + JSON.stringify(event, undefined, 2));
 
   if (type === 'stdout.data') {
-    this.command.stdout.emit('data', data);
+    // exec appears to emit strings, while spawn emits buffers?
+    if(typeOf === 'string'){
+      this.command.stdout.emit('data', data);
+    }else if(typeOf === 'object'){
+      this.command.stdout.emit('data', new Buffer(data, 'hex'));
+    }
   } else if (type === 'stderr.data') {
     this.command.stderr.emit('data', data);
   }else if (type === 'exit') {
     this.command.emit('exit', code, signal);
   }else if (type === 'close') {
     this.command.emit('close', code, signal);
+  }else if (type === 'exec') {
+    this.callback(error, stdout, stderr);
   }
-
 };
 
 Bridge.prototype._sendCommand = function (command) {
@@ -111,6 +123,28 @@ var spawn = function (name, args, options) {
   return command;
 };
 
+var exec = function (name, options, callback) {
+  var command = new Command();
+
+  var _exec = function () {
+    bridge.callback = callback;
+    bridge._sendCommand({
+      action: 'exec', name, options
+    });
+  };
+
+  bridge.command = command;
+  if(!bridge.open) {
+    bridge.once('open', function () {
+      _exec();
+    });
+  }else {
+    _exec();
+  }
+
+  return command;
+};
+
 module.exports = {
-  ChildProcess, spawn
+  ChildProcess, spawn, exec
 };

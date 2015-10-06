@@ -1,4 +1,5 @@
-var spawn  = require('../').spawn;
+var spawn = require('../').spawn;
+// var spawn = require('child_process').spawn;
 
 var command = spawn('./test.sh', [], {});
 
