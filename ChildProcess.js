@@ -124,6 +124,10 @@ var spawn = function (name, args, options) {
 };
 
 var exec = function (name, options, callback) {
+  if(typeof callback === 'undefined'){
+    var callback = options;
+  }
+
   var command = new Command();
 
   var _exec = function () {
