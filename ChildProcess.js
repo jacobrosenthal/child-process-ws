@@ -110,7 +110,7 @@ Stdin.prototype.write = function(data){
   var _write = function () {
     console.log('push', self.uuid)
     bridge._sendCommand({
-      action: 'stdin.write', uuid: self.uuid, data
+      action: 'stdin.write', uuid: self.uuid, data: data
     });
   };
 
@@ -145,7 +145,7 @@ Child.prototype.kill = function(signal){
   console.log('kill', this.uuid);
 
   bridge._sendCommand({
-    action: 'kill', uuid: this.uuid, signal
+    action: 'kill', uuid: this.uuid, signal: signal
   });
 }
 
@@ -160,7 +160,7 @@ var spawn = function (name, args, options) {
 
   var _spawn = function () {
     bridge._sendCommand({
-      action: 'spawn', uuid, name, args, options
+      action: 'spawn', uuid: uuid, name: name, args: args, options: options
     });
   };
 
@@ -187,7 +187,7 @@ var exec = function (name, options, callback) {
   var _exec = function () {
     bridge.callback = callback;
     bridge._sendCommand({
-      action: 'exec', uuid, name, options
+      action: 'exec', uuid: uuid, name: name, options: options
     });
   };
 
@@ -203,5 +203,7 @@ var exec = function (name, options, callback) {
 };
 
 module.exports = {
-  ChildProcess, spawn, exec
+  ChildProcess: ChildProcess,
+  spawn: spawn,
+  exec: exec
 };

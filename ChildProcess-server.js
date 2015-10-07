@@ -41,7 +41,7 @@ var onMessage = function (message) {
     children[uuid].kill(signal);
   }
 
-};
+}
 
 wss.on('connection', function (ws_) {
   console.log('ws -> connection');
@@ -60,42 +60,42 @@ var _spawn = function (uuid, name, args, options) {
 
   child.stdout.on('data', function (data) {
     sendEvent({
-      type: 'stdout.data', data: data, typeOf: typeof data, uuid
+      type: 'stdout.data', data: data, typeOf: typeof data, uuid: uuid
     });
   });
 
   child.stderr.on('data', function (data) {
     sendEvent({
-      type: 'stderr.data', data: data, uuid
+      type: 'stderr.data', data: data, uuid: uuid
     });
   });
 
   child.on('exit', function (code, signal) {
     sendEvent({
-      type: 'exit', code: code, signal: signal, uuid
+      type: 'exit', code: code, signal: signal, uuid: uuid
     });
   });
 
   child.on('close', function (code, signal) {
     sendEvent({
-      type: 'close', code: code, signal: signal, uuid
+      type: 'close', code: code, signal: signal, uuid: uuid
     });
   });
 
   sendEvent({
-    type: 'open', uuid
+    type: 'open', uuid: uuid
   });
 
-};
+}
 
 var _exec = function (uuid, name, options) {
   var child = cp.exec(name, options, function(error, stdout, stderr){
     sendEvent({
       type: 'exec',
       error: error ? error.message : null,
-      stdout,
-      stderr,
-      uuid
+      stdout: stdout,
+      stderr: stderr,
+      uuid: uuid
     });
   });
 
@@ -103,30 +103,30 @@ var _exec = function (uuid, name, options) {
 
   child.stdout.on('data', function (data) {
     sendEvent({
-      type: 'stdout.data', data: data, typeOf: typeof data, uuid
+      type: 'stdout.data', data: data, typeOf: typeof data, uuid: uuid
     });
   });
 
   child.stderr.on('data', function (data) {
     sendEvent({
-      type: 'stderr.data', data: data, uuid
+      type: 'stderr.data', data: data, uuid: uuid
     });
   });
 
   child.on('exit', function (code, signal) {
     sendEvent({
-      type: 'exit', code: code, signal: signal, uuid
+      type: 'exit', code: code, signal: signal, uuid: uuid
     });
   });
 
   child.on('close', function (code, signal) {
     sendEvent({
-      type: 'close', code: code, signal: signal, uuid
+      type: 'close', code: code, signal: signal, uuid: uuid
     });
   });
 
   sendEvent({
-    type: 'open', uuid
+    type: 'open', uuid: uuid
   });
 
 };
