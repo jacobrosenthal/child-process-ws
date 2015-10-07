@@ -18,3 +18,5 @@ command.on('exit', function (code, signal) {
 command.on('close', function (code, signal) {
   console.log('close', code, signal);
 });
+
+command.stdin.write('stuff\n');

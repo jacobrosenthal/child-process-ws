@@ -4,6 +4,8 @@ var WebSocket = require('ws');
 var port = 0xC1e;
 var ws;
 
+var children = {};
+
 var wss = new WebSocket.Server({
   port: port
 });
@@ -18,16 +20,27 @@ var onMessage = function (message) {
   console.log('ws -> message: ' + message);
   var messageObj = JSON.parse(message);
   var action = messageObj.action;
+  var uuid = messageObj.uuid;
 
   var name = messageObj.name;
   var args = messageObj.args;
   var options = messageObj.options;
 
+  var data = messageObj.data;
+  var signal = messageObj.signal;
+
   if (action === 'spawn') {
-    _spawn(name, args, options);
+    _spawn(uuid, name, args, options);
   }else if(action === 'exec'){
-    _exec(name, options)
+    _exec(uuid, name, options);
+  }else if(action === 'stdin.write') {
+    children[uuid].stdin.write(data);
+  }else if(action === 'stdin.end') {
+    children[uuid].stdin.end();
+  }else if(action === 'kill'){
+    children[uuid].kill(signal);
   }
+
 };
 
 wss.on('connection', function (ws_) {
@@ -40,67 +53,80 @@ wss.on('connection', function (ws_) {
   });
 });
 
-var _spawn = function (name, args, options) {
-  var command = cp.spawn(name, args, options);
+var _spawn = function (uuid, name, args, options) {
 
-  command.stdout.on('data', function (data) {
+  var child = cp.spawn(name, args, options);
+  children[uuid] = child;
+
+  child.stdout.on('data', function (data) {
     sendEvent({
-      type: 'stdout.data', data: data, typeOf: typeof data
+      type: 'stdout.data', data: data, typeOf: typeof data, uuid
     });
   });
 
-  command.stderr.on('data', function (data) {
+  child.stderr.on('data', function (data) {
     sendEvent({
-      type: 'stderr.data', data: data
+      type: 'stderr.data', data: data, uuid
     });
   });
 
-  command.on('exit', function (code, signal) {
+  child.on('exit', function (code, signal) {
     sendEvent({
-      type: 'exit', code: code, signal: signal
+      type: 'exit', code: code, signal: signal, uuid
     });
   });
 
-  command.on('close', function (code, signal) {
+  child.on('close', function (code, signal) {
     sendEvent({
-      type: 'close', code: code, signal: signal
+      type: 'close', code: code, signal: signal, uuid
     });
+  });
+
+  sendEvent({
+    type: 'open', uuid
   });
 
 };
 
-var _exec = function (name, options) {
-  var command = cp.exec(name, options, function(error, stdout, stderr){
+var _exec = function (uuid, name, options) {
+  var child = cp.exec(name, options, function(error, stdout, stderr){
     sendEvent({
       type: 'exec',
       error: error ? error.message : null,
       stdout,
-      stderr
+      stderr,
+      uuid
     });
   });
 
-  command.stdout.on('data', function (data) {
+  children[uuid] = child;
+
+  child.stdout.on('data', function (data) {
     sendEvent({
-      type: 'stdout.data', data: data, typeOf: typeof data
+      type: 'stdout.data', data: data, typeOf: typeof data, uuid
     });
   });
 
-  command.stderr.on('data', function (data) {
+  child.stderr.on('data', function (data) {
     sendEvent({
-      type: 'stderr.data', data: data
+      type: 'stderr.data', data: data, uuid
     });
   });
 
-  command.on('exit', function (code, signal) {
+  child.on('exit', function (code, signal) {
     sendEvent({
-      type: 'exit', code: code, signal: signal
+      type: 'exit', code: code, signal: signal, uuid
     });
   });
 
-  command.on('close', function (code, signal) {
+  child.on('close', function (code, signal) {
     sendEvent({
-      type: 'close', code: code, signal: signal
+      type: 'close', code: code, signal: signal, uuid
     });
+  });
+
+  sendEvent({
+    type: 'open', uuid
   });
 
 };

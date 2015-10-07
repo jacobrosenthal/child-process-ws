@@ -8,9 +8,11 @@
   "description": "",
   "main": "ChildProcess.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ws-cp": "node ./ChildProcess-server.js"
   },
   "dependencies": {
+    "uuid": "^2.0.1",
     "ws": "^0.8.0"
   },
   "author": {

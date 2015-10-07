@@ -2,13 +2,14 @@ var events = require('events');
 var util = require('util');
 
 var WebSocket = require('ws');
+var uuidgen = require('uuid');
 
 function Bridge () {
   var port = 0xC1e;
   var ip = process.env.IP || 'localhost';
 
   this.open = false;
-  this.command = null;
+  this.children = {};
   this.callback = null;
   this._ws = new WebSocket('ws://' + ip + ':' + port);
 
@@ -56,23 +57,28 @@ Bridge.prototype._onMessage = function (event) {
   var stdout = event.stdout;
   var stderr = event.stderr;
 
+  var uuid = event.uuid;
+
+  var child = this.children[uuid];
   // console.log('on -> message: ' + JSON.stringify(event, undefined, 2));
 
   if (type === 'stdout.data') {
     // exec appears to emit strings, while spawn emits buffers?
     if(typeOf === 'string'){
-      this.command.stdout.emit('data', data);
+      child.stdout.emit('data', data);
     }else if(typeOf === 'object'){
-      this.command.stdout.emit('data', new Buffer(data, 'hex'));
+      child.stdout.emit('data', new Buffer(data, 'hex'));
     }
   } else if (type === 'stderr.data') {
-    this.command.stderr.emit('data', data);
+    child.stderr.emit('data', data);
   }else if (type === 'exit') {
-    this.command.emit('exit', code, signal);
+    child.emit('exit', code, signal);
   }else if (type === 'close') {
-    this.command.emit('close', code, signal);
+    child.emit('close', code, signal);
   }else if (type === 'exec') {
     this.callback(error, stdout, stderr);
+  }else if (type === 'open') {
+    child.stdin.emit('open');
   }
 };
 
@@ -92,26 +98,72 @@ function Stderr () {
 };
 util.inherits(Stderr, events.EventEmitter);
 
-function  Command () {
+function Stdin (uuid) {
+  this.open = false;
+  this.uuid = uuid;
+};
+util.inherits(Stdin, events.EventEmitter);
+
+Stdin.prototype.write = function(data){
+  var self = this;
+
+  var _write = function () {
+    console.log('push', self.uuid)
+    bridge._sendCommand({
+      action: 'stdin.write', uuid: self.uuid, data
+    });
+  };
+
+  if(!this.open) {
+    this.once('open', function () {
+      console.log('child.open');
+      _write();
+    });
+  }else {
+    _write();
+  }
+}
+
+Stdin.prototype.end = function(){
+  console.log('end', this.uuid);
+
+  bridge._sendCommand({
+    action: 'stdin.end', uuid: this.uuid
+  });
+}
+
+function Child (uuid) {
+  this.pid = null;
+  this.connected = false;
   this.stdout = new Stdout();
   this.stderr = new Stderr();
+  this.stdin = new Stdin(uuid);
 };
-util.inherits(Command, events.EventEmitter);
+util.inherits(Child, events.EventEmitter);
+
+Child.prototype.kill = function(signal){
+  console.log('kill', this.uuid);
+
+  bridge._sendCommand({
+    action: 'kill', uuid: this.uuid, signal
+  });
+}
 
 var ChildProcess = function ChildProcess () {
 };
 util.inherits(ChildProcess, events.EventEmitter);
 
 var spawn = function (name, args, options) {
-  var command = new Command();
+  var uuid = uuidgen.v4();
+  var child = new Child(uuid);
+  bridge.children[uuid] = child;
 
   var _spawn = function () {
     bridge._sendCommand({
-      action: 'spawn', name, args, options
+      action: 'spawn', uuid, name, args, options
     });
   };
 
-  bridge.command = command;
   if(!bridge.open) {
     bridge.once('open', function () {
       _spawn();
@@ -120,7 +172,7 @@ var spawn = function (name, args, options) {
     _spawn();
   }
 
-  return command;
+  return child;
 };
 
 var exec = function (name, options, callback) {
@@ -128,16 +180,17 @@ var exec = function (name, options, callback) {
     var callback = options;
   }
 
-  var command = new Command();
+  var uuid = uuidgen.v4();
+  var child = new Child(uuid);
+  bridge.children[uuid] = child;
 
   var _exec = function () {
     bridge.callback = callback;
     bridge._sendCommand({
-      action: 'exec', name, options
+      action: 'exec', uuid, name, options
     });
   };
 
-  bridge.command = command;
   if(!bridge.open) {
     bridge.once('open', function () {
       _exec();
@@ -146,7 +199,7 @@ var exec = function (name, options, callback) {
     _exec();
   }
 
-  return command;
+  return child;
 };
 
 module.exports = {
