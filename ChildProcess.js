@@ -134,6 +134,7 @@ Stdin.prototype.end = function(){
 }
 
 function Child (uuid) {
+  this.uuid = uuid;
   this.pid = null;
   this.connected = false;
   this.stdout = new Stdout();
