@@ -1,5 +1,6 @@
 var events = require('events');
 var util = require('util');
+var debug = require('debug')('cp');
 
 var WebSocket = require('ws');
 var uuidgen = require('uuid');
@@ -60,7 +61,7 @@ Bridge.prototype._onMessage = function (event) {
   var uuid = event.uuid;
 
   var child = this.children[uuid];
-  // console.log('on -> message: ' + JSON.stringify(event, undefined, 2));
+   debug('on -> message: ' + JSON.stringify(event, undefined, 2));
 
   if (type === 'stdout.data') {
     // exec appears to emit strings, while spawn emits buffers?
@@ -83,7 +84,7 @@ Bridge.prototype._onMessage = function (event) {
 };
 
 Bridge.prototype._sendCommand = function (command) {
-  // console.log('on -> sendMessage: ' + JSON.stringify(command, undefined, 2));
+   debug('on -> sendMessage: ' + JSON.stringify(command, undefined, 2));
   var message = JSON.stringify(command);
   this._ws.send(message);
 };
@@ -108,7 +109,7 @@ Stdin.prototype.write = function(data){
   var self = this;
 
   var _write = function () {
-    console.log('push', self.uuid)
+    debug('push', self.uuid)
     bridge._sendCommand({
       action: 'stdin.write', uuid: self.uuid, data: data
     });
@@ -116,7 +117,7 @@ Stdin.prototype.write = function(data){
 
   if(!this.open) {
     this.once('open', function () {
-      console.log('child.open');
+      debug('child.open');
       _write();
     });
   }else {
@@ -125,7 +126,7 @@ Stdin.prototype.write = function(data){
 }
 
 Stdin.prototype.end = function(){
-  console.log('end', this.uuid);
+  debug('end', this.uuid);
 
   bridge._sendCommand({
     action: 'stdin.end', uuid: this.uuid
@@ -142,7 +143,7 @@ function Child (uuid) {
 util.inherits(Child, events.EventEmitter);
 
 Child.prototype.kill = function(signal){
-  console.log('kill', this.uuid);
+  debug('kill', this.uuid);
 
   bridge._sendCommand({
     action: 'kill', uuid: this.uuid, signal: signal
