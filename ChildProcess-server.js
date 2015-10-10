@@ -1,5 +1,6 @@
 var cp = require('child_process');
 var WebSocket = require('ws');
+var debug = require('debug')('cp-server');
 
 var port = 0xC1e;
 var ws;
@@ -59,29 +60,34 @@ var _spawn = function (uuid, name, args, options) {
   children[uuid] = child;
 
   child.stdout.on('data', function (data) {
+    debug('spawn stdout.data ' + uuid + data);
     sendEvent({
       type: 'stdout.data', data: data, typeOf: typeof data, uuid: uuid
     });
   });
 
   child.stderr.on('data', function (data) {
+    debug('spawn stderr.data ' + uuid + data);
     sendEvent({
       type: 'stderr.data', data: data, uuid: uuid
     });
   });
 
   child.on('exit', function (code, signal) {
+    debug('spawn exit ' + uuid + code + signal);
     sendEvent({
       type: 'exit', code: code, signal: signal, uuid: uuid
     });
   });
 
   child.on('close', function (code, signal) {
+    debug('spawn close ' + uuid + code + signal);
     sendEvent({
       type: 'close', code: code, signal: signal, uuid: uuid
     });
   });
 
+  debug('spawn open ' + uuid);
   sendEvent({
     type: 'open', uuid: uuid
   });
@@ -102,29 +108,34 @@ var _exec = function (uuid, name, options) {
   children[uuid] = child;
 
   child.stdout.on('data', function (data) {
+    debug('exec stdout.data ' + uuid + data);
     sendEvent({
       type: 'stdout.data', data: data, typeOf: typeof data, uuid: uuid
     });
   });
 
   child.stderr.on('data', function (data) {
+    debug('exec stderr.data ' + uuid + data);
     sendEvent({
       type: 'stderr.data', data: data, uuid: uuid
     });
   });
 
   child.on('exit', function (code, signal) {
+    debug('exec exit ' + uuid + code + signal);
     sendEvent({
       type: 'exit', code: code, signal: signal, uuid: uuid
     });
   });
 
   child.on('close', function (code, signal) {
+    debug('exec close ' + uuid + code + signal);
     sendEvent({
       type: 'close', code: code, signal: signal, uuid: uuid
     });
   });
 
+  debug('open ' + uuid);
   sendEvent({
     type: 'open', uuid: uuid
   });

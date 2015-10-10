@@ -9,7 +9,7 @@
   "main": "ChildProcess.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ws-cp": "node ./ChildProcess-server.js"
+    "ws-cp": "DEBUG=cp-server node ./ChildProcess-server.js"
   },
   "dependencies": {
     "debug": "^2.2.0",

@@ -1,7 +1,7 @@
 var exec  = require('../').exec;
 // var exec  = require('child_process').exec;
 
-var command = exec('./test.sh', [], function(error, stdout, stderror){
+var command = exec('./example/test.sh', function(error, stdout, stderror){
   console.log(error, stdout.toString(), stderror.toString());
 });
 

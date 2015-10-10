@@ -1,7 +1,7 @@
 var spawn = require('../').spawn;
 // var spawn = require('child_process').spawn;
 
-var command = spawn('./test.sh', [], {});
+var command = spawn('./example/test.sh');
 
 command.stdout.on('data', function (data) {
   console.log('stdout', data.toString());

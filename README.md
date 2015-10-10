@@ -1,13 +1,8 @@
 # child-process-ws
-Child process via websocket. Very minimal implementation, largely for my uses.
+Child process via websocket. Very minimal implementation of exec and spawn, largely for my uses.
 
-In different tabs
+In different tabs:
 ```
-cd example
-node ../ChildProcess-server.js
-```
-
-```
-cd example
-node test.js
+npm run ws-cp
+node example/spawn.js
 ```
