@@ -13,12 +13,12 @@ var wss = new WebSocket.Server({
 
 var sendEvent = function (event) {
   var message = JSON.stringify(event);
-  console.log('ws -> send: ' + message);
+  debug('ws -> send: ' + message);
   ws.send(message);
 };
 
 var onMessage = function (message) {
-  console.log('ws -> message: ' + message);
+  debug('ws -> message: ' + message);
   var messageObj = JSON.parse(message);
   var action = messageObj.action;
   var uuid = messageObj.uuid;
@@ -45,12 +45,12 @@ var onMessage = function (message) {
 }
 
 wss.on('connection', function (ws_) {
-  console.log('ws -> connection');
+  debug('ws -> connection');
   ws = ws_;
   ws.on('message', onMessage);
 
   ws.on('close', function () {
-    console.log('ws -> close');
+    debug('ws -> close');
   });
 });
 
