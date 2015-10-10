@@ -79,6 +79,7 @@ Bridge.prototype._onMessage = function (event) {
   }else if (type === 'exec') {
     this.callback(error, stdout, stderr);
   }else if (type === 'open') {
+    child.stdin.open = true;
     child.stdin.emit('open');
   }
 };
